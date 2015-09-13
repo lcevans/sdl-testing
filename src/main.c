@@ -11,7 +11,6 @@ double SCREEN_HEIGHT = 480;
 
 
 SDL_Window* window = NULL; 
-SDL_Surface* screenSurface = NULL;
 SDL_Renderer* renderer = NULL;
 
 typedef struct {
@@ -20,6 +19,7 @@ typedef struct {
   double angle; // radians
   double turning; // radians
   double velocity;
+  double max_velocity;
   double acceleration;
 } ship_t;
 
@@ -76,14 +76,13 @@ void display_ship(void)
 
 }
 
-void update_ship(void)
+void update_state(void)
 {
+  // Update ship
   double delta_x = ship.velocity * cos(ship.angle);
   double delta_y = ship.velocity * sin(ship.angle);
   ship.x = fmod(ship.x + delta_x + SCREEN_WIDTH, SCREEN_WIDTH);
   ship.y = fmod(ship.y + delta_y + SCREEN_HEIGHT, SCREEN_HEIGHT);
-  printf("ship.x: %f\n", ship.x);
-  printf("ship.y: %f\n", ship.y);
 }
 
 void handle_key(SDL_KeyboardEvent key)
@@ -92,6 +91,8 @@ void handle_key(SDL_KeyboardEvent key)
 
   case SDLK_UP:
     ship.velocity += ship.acceleration;
+    if(ship.velocity > ship.max_velocity)
+      ship.velocity = ship.max_velocity;
     break;
 
   case SDLK_DOWN:
@@ -100,13 +101,16 @@ void handle_key(SDL_KeyboardEvent key)
       ship.velocity = 0;
     break;
 
-
   case SDLK_LEFT:
     ship.angle = fmod(ship.angle - ship.turning + TWO_PI, TWO_PI);
     break;
 
   case SDLK_RIGHT:
     ship.angle = fmod(ship.angle + ship.turning + TWO_PI, TWO_PI);
+    break;
+
+  case SDLK_SPACE:
+    printf("pew\n");
     break;
 
   default:
@@ -145,7 +149,7 @@ void handle_events(void)
 void game_loop(void)
 {
   handle_events();
-  update_ship();
+  update_state();
   display_ship();
 }
 
@@ -157,14 +161,12 @@ int main(int argc, char **argv)
   ship.angle = 0;
   ship.turning = 0.1;
   ship.velocity = 0;
+  ship.max_velocity = 0.1;
   ship.acceleration = 0.01;
 
   //Initialize SDL 
   SDL_Init( SDL_INIT_VIDEO );
   window = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-
-  //Get window surface 
-  screenSurface = SDL_GetWindowSurface( window );
 
   renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
   
