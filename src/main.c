@@ -1,13 +1,14 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 
 #define TWO_PI 6.28318530718
 #define PI 3.14159265359
 
 
-double SCREEN_WIDTH = 640;
-double SCREEN_HEIGHT = 480;
+double SCREEN_WIDTH = 1200;
+double SCREEN_HEIGHT = 800;
 
 
 SDL_Window* window = NULL; 
@@ -16,9 +17,10 @@ SDL_Renderer* renderer = NULL;
 typedef struct {
   double x;
   double y;
+  double vel_x;
+  double vel_y;
   double angle; // radians
   double turning; // radians
-  double velocity;
   double max_velocity;
   double acceleration;
 } ship_t;
@@ -31,6 +33,26 @@ typedef struct {
 ship_t ship;
 int running = 1;
 
+
+double rand2()
+{
+  return (double)rand() / (double)RAND_MAX ;
+}
+
+ship_t random_ship(void)
+{
+  ship_t new_ship;
+  new_ship.x = rand2() * SCREEN_WIDTH;
+  new_ship.y = rand2() * SCREEN_HEIGHT;
+  new_ship.angle = rand2() * TWO_PI;
+  new_ship.turning = 0.1 + rand2() * 0.4;
+  new_ship.vel_x = 0;
+  new_ship.vel_y = 0;
+  new_ship.max_velocity = 0.06 + rand2() * 0.1;
+  new_ship.acceleration = 0.005 + rand2() * 0.01;
+
+  return new_ship;
+}
 
 void display_ship(void)
 {
@@ -69,9 +91,6 @@ void display_ship(void)
 		     tip.x, tip.y);
 
 
-
-
-
   SDL_RenderPresent(renderer); 
 
 }
@@ -79,10 +98,8 @@ void display_ship(void)
 void update_state(void)
 {
   // Update ship
-  double delta_x = ship.velocity * cos(ship.angle);
-  double delta_y = ship.velocity * sin(ship.angle);
-  ship.x = fmod(ship.x + delta_x + SCREEN_WIDTH, SCREEN_WIDTH);
-  ship.y = fmod(ship.y + delta_y + SCREEN_HEIGHT, SCREEN_HEIGHT);
+  ship.x = fmod(ship.x + ship.vel_x + SCREEN_WIDTH, SCREEN_WIDTH);
+  ship.y = fmod(ship.y + ship.vel_y + SCREEN_HEIGHT, SCREEN_HEIGHT);
 }
 
 void handle_key(SDL_KeyboardEvent key)
@@ -90,16 +107,20 @@ void handle_key(SDL_KeyboardEvent key)
   switch(key.keysym.sym){
 
   case SDLK_UP:
-    ship.velocity += ship.acceleration;
-    if(ship.velocity > ship.max_velocity)
-      ship.velocity = ship.max_velocity;
+    ship.vel_x += ship.acceleration * cos(ship.angle);
+    ship.vel_y += ship.acceleration * sin(ship.angle);
+    double speed = sqrt(ship.vel_x * ship.vel_x + ship.vel_y * ship.vel_y);
+    if(speed > ship.max_velocity){
+      ship.vel_x = ship.vel_x / speed *  ship.max_velocity;
+      ship.vel_y = ship.vel_y / speed *  ship.max_velocity;
+    }
     break;
 
-  case SDLK_DOWN:
-    ship.velocity -= ship.acceleration;
-    if(ship.velocity < 0)
-      ship.velocity = 0;
-    break;
+  /* case SDLK_DOWN: */
+  /*   ship.velocity -= ship.acceleration; */
+  /*   if(ship.velocity < 0) */
+  /*     ship.velocity = 0; */
+  /*   break; */
 
   case SDLK_LEFT:
     ship.angle = fmod(ship.angle - ship.turning + TWO_PI, TWO_PI);
@@ -156,13 +177,8 @@ void game_loop(void)
 
 int main(int argc, char **argv)
 {
-  ship.x = 100;
-  ship.y = 100;
-  ship.angle = 0;
-  ship.turning = 0.1;
-  ship.velocity = 0;
-  ship.max_velocity = 0.1;
-  ship.acceleration = 0.01;
+  srand(time(NULL));
+  ship = random_ship();
 
   //Initialize SDL 
   SDL_Init( SDL_INIT_VIDEO );
