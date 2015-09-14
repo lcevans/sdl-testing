@@ -11,7 +11,7 @@ double SCREEN_WIDTH = 1200;
 double SCREEN_HEIGHT = 800;
 
 
-SDL_Window* window = NULL; 
+SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 
 typedef struct {
@@ -48,8 +48,10 @@ ship_t random_ship(void)
   new_ship.turning = 0.1 + rand2() * 0.4;
   new_ship.vel_x = 0;
   new_ship.vel_y = 0;
-  new_ship.max_velocity = 0.06 + rand2() * 0.1;
+  new_ship.max_velocity = 0.1 + rand2() * 0.6;
   new_ship.acceleration = 0.005 + rand2() * 0.01;
+
+  printf("MAX: %f\n", new_ship.max_velocity);
 
   return new_ship;
 }
@@ -66,7 +68,7 @@ void display_ship(void)
   back.x = ship.x + 5 * cos(ship.angle + PI);
   back.y = ship.y + 5 * sin(ship.angle + PI);
 
-  
+
   point_t lwing;
   lwing.x = ship.x + 10 * cos(ship.angle + PI - 0.8);
   lwing.y = ship.y + 10 * sin(ship.angle + PI - 0.8);
@@ -76,7 +78,7 @@ void display_ship(void)
   rwing.y = ship.y + 10 * sin(ship.angle + PI + 0.8);
 
 
-  
+
   SDL_RenderDrawLine(renderer,
 		     tip.x, tip.y,
 		     lwing.x, lwing.y);
@@ -91,7 +93,7 @@ void display_ship(void)
 		     tip.x, tip.y);
 
 
-  SDL_RenderPresent(renderer); 
+  SDL_RenderPresent(renderer);
 
 }
 
@@ -115,12 +117,6 @@ void handle_key(SDL_KeyboardEvent key)
       ship.vel_y = ship.vel_y / speed *  ship.max_velocity;
     }
     break;
-
-  /* case SDLK_DOWN: */
-  /*   ship.velocity -= ship.acceleration; */
-  /*   if(ship.velocity < 0) */
-  /*     ship.velocity = 0; */
-  /*   break; */
 
   case SDLK_LEFT:
     ship.angle = fmod(ship.angle - ship.turning + TWO_PI, TWO_PI);
@@ -151,7 +147,7 @@ void handle_events(void)
   while( SDL_PollEvent( &event ) ){
     /* We are only worried about SDL_KEYDOWN and SDL_KEYUP events */
     switch( event.type ){
-      
+
     case SDL_KEYDOWN:
       handle_key(event.key);
       break;
@@ -159,7 +155,7 @@ void handle_events(void)
     case SDL_QUIT:
       running = 0;
       break;
-      
+
     default:
       break;
     }
@@ -180,21 +176,19 @@ int main(int argc, char **argv)
   srand(time(NULL));
   ship = random_ship();
 
-  //Initialize SDL 
+  //Initialize SDL
   SDL_Init( SDL_INIT_VIDEO );
   window = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
 
   renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-  
-  //Wait two seconds 
+
+  //Wait two seconds
   /* SDL_Delay( 2000 );	 */
-  
+
   while(running) {
       game_loop();
   }
-  
+
   SDL_Quit();
   return 0;
 }
-
-
